@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  hadoop-spark-jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hadoop-spark-jupyter
+    ports:
+      # Jupyter Notebook
+      - "8888:8888"
+      # Spark UI
+      - "4040:4040"
+      # Spark Master UI
+      - "8080:8080"
+      # HDFS NameNode UI
+      - "9870:9870"
+      # YARN ResourceManager UI
+      - "8088:8088"
+    volumes:
+      - ./notebooks:/notebooks
+    environment:
+      - PYSPARK_ALLOW_INSECURE_GATEWAY=1
+    restart: unless-stopped
