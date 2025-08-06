@@ -3,8 +3,14 @@
 logs/
 *.out
 
-# Jupyter Notebook checkpoints
+# Jupyter Notebook checkpoints y archivos temporales
 .ipynb_checkpoints/
+*.ipynb_checkpoints
+# Jupyter runtime files
+.jupyter/
+jupyter_notebook_config.py
+# Notebooks con outputs (opcional - descomenta si no quieres versionar outputs)
+# *.ipynb
 
 # Python cache
 __pycache__/
@@ -60,6 +66,19 @@ hadoop/
 spark-warehouse/
 metastore_db/
 derby.log
+# Hadoop logs y configuraciones temporales
+hadoop-logs/
+*.pid
+# Spark logs y archivos temporales
+spark-events/
+work/
+# HDFS data directories
+dfs/
+name/
+data/
+# Yarn logs
+yarn-logs/
+userlogs/
 
 # Temporary files
 *.tmp
@@ -72,6 +91,14 @@ data/
 *.csv
 *.json
 *.parquet
+*.orc
+*.avro
+# Directorios de datos del contenedor
+notebooks/.Trash-*/
+notebooks/*/
+!notebooks/*.ipynb
+!notebooks/spark_example.ipynb
+!notebooks/Untitled.ipynb
 
 # Backup files
 *.bak
@@ -80,6 +107,16 @@ data/
 # JVM crash logs
 hs_err_pid*.log
 replay_pid*.log
+# Hadoop/Spark additional logs
+*.audit
+*.metrics
+*.gc
+# Container generated files
+.container_*
+volumes/
+# SSH keys generados por el contenedor
+.ssh/id_rsa*
+.ssh/known_hosts
 
 # Maven
 target/
