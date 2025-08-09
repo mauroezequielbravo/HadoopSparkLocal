@@ -53,8 +53,8 @@ RUN wget https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/
 
 # Configuración de Hadoop
 RUN mkdir -p /opt/hadoop/logs \
-    && mkdir -p /hadoop/dfs/name \
-    && mkdir -p /hadoop/dfs/data
+    && mkdir -p /opt/hadoop/data/namenode \
+    && mkdir -p /opt/hadoop/data/datanode
 
 # Instalación de Spark
 ENV SPARK_VERSION=3.5.0

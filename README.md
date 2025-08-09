@@ -2,6 +2,13 @@
 
 Este proyecto proporciona un entorno Docker con Hadoop, Spark y Jupyter Notebook integrados.
 
+## Persistencia de datos
+
+Los datos de Hadoop se almacenan de forma persistente en el directorio local `./hadoop-data/`, que se monta como volumen en el contenedor. Esto significa que:
+- Los datos del HDFS se mantienen entre reinicios del contenedor
+- No es necesario reformatear el NameNode cada vez
+- Los archivos almacenados en HDFS persisten localmente
+
 ## Servicios y puertos
 
 - Jupyter Notebook: http://localhost:8888
@@ -26,10 +33,14 @@ docker rmi hadoopsparklocal-hadoop-spark-jupyter
 # 3. Limpiar volúmenes (opcional, elimina datos persistentes)
 docker volume prune -f
 
-# 4. Construir e iniciar contenedores
+# 4. Eliminar datos persistentes de Hadoop (CUIDADO: elimina todos los datos del HDFS)
+rm -rf ./hadoop-data
+# En Windows PowerShell: Remove-Item -Recurse -Force ./hadoop-data
+
+# 5. Construir e iniciar contenedores
 docker-compose up -d
 
-# 5. Ejecutar comandos de inicio manual (ver sección siguiente)
+# 6. Ejecutar comandos de inicio manual (ver sección siguiente)
 ```
 
 ### Inicio Automático

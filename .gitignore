@@ -118,6 +118,9 @@ volumes/
 .ssh/id_rsa*
 .ssh/known_hosts
 
+# Datos locales de Hadoop
+hadoop-data/
+
 # Maven
 target/
 pom.xml.tag

@@ -26,11 +26,11 @@ cat > $HADOOP_CONF_DIR/hdfs-site.xml << EOF
     </property>
     <property>
         <name>dfs.namenode.name.dir</name>
-        <value>/hadoop/dfs/name</value>
+        <value>/opt/hadoop/data/namenode</value>
     </property>
     <property>
         <name>dfs.datanode.data.dir</name>
-        <value>/hadoop/dfs/data</value>
+        <value>/opt/hadoop/data/datanode</value>
     </property>
 </configuration>
 EOF
@@ -96,7 +96,7 @@ echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config
 /usr/sbin/sshd -D &
 
 # Formatear el namenode si no existe
-if [ ! -d "/hadoop/dfs/name/current" ]; then
+if [ ! -d "/opt/hadoop/data/namenode/current" ]; then
   echo "Formateando HDFS NameNode..."
   $HADOOP_HOME/bin/hdfs namenode -format
 fi
