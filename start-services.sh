@@ -70,6 +70,13 @@ export HDFS_SECONDARYNAMENODE_USER=root
 export YARN_RESOURCEMANAGER_USER=root
 export YARN_NODEMANAGER_USER=root
 
+# Configurar bash como shell por defecto
+export SHELL=/bin/bash
+export BASH_ENV=/etc/profile
+
+# Asegurar que los scripts de Hadoop usen bash
+export HADOOP_SHELL=/bin/bash
+
 # Generar claves SSH del host
 ssh-keygen -A
 

@@ -16,7 +16,8 @@ RUN apk add --no-cache \
     python3-dev \
     musl-dev \
     linux-headers \
-    && ln -sf python3 /usr/bin/python
+    && ln -sf python3 /usr/bin/python \
+    && ln -sf /bin/bash /bin/sh
 
 # Configuración de variables de entorno para Java
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
@@ -29,6 +30,15 @@ ENV HDFS_SECONDARYNAMENODE_USER=root
 ENV YARN_RESOURCEMANAGER_USER=root
 ENV YARN_NODEMANAGER_USER=root
 
+# Configurar bash como shell por defecto para Hadoop
+ENV SHELL=/bin/bash
+ENV BASH_ENV=/etc/profile
+
+# Crear un wrapper para forzar bash en scripts de Hadoop
+RUN echo '#!/bin/bash' > /usr/local/bin/hadoop-bash-wrapper && \
+    echo 'exec bash "$@"' >> /usr/local/bin/hadoop-bash-wrapper && \
+    chmod +x /usr/local/bin/hadoop-bash-wrapper
+
 # Instalación de Hadoop
 ENV HADOOP_VERSION=3.3.6
 ENV HADOOP_HOME=/opt/hadoop
@@ -38,7 +48,8 @@ ENV PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
 RUN wget https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz \
     && tar -xzf hadoop-${HADOOP_VERSION}.tar.gz \
     && mv hadoop-${HADOOP_VERSION} ${HADOOP_HOME} \
-    && rm hadoop-${HADOOP_VERSION}.tar.gz
+    && rm hadoop-${HADOOP_VERSION}.tar.gz \
+    && rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Configuración de Hadoop
 RUN mkdir -p /opt/hadoop/logs \
