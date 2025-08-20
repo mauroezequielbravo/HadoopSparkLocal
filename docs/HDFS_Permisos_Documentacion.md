@@ -16,8 +16,7 @@ Permission denied: user=dr.who, access=WRITE, inode="/":root:supergroup:drwxr-xr
 
 ### 1. Verificar Estado Actual
 ```bash
-# Acceder al contenedor/servidor Hadoop
-docker exec -it hadoop-spark-jupyter bash
+# Acceder al contenedor/servidor Had
 
 # Verificar permisos del directorio raíz
 hdfs dfs -ls /
@@ -70,6 +69,83 @@ hdfs dfs -ls -R /user
 hdfs dfs -getfacl /user/dr.who/LakeHousePruebas
 ```
 
+## 🔄 Comandos de Gestión de Permisos
+
+### Cambiar Propietario Recursivamente
+```bash
+# Cambiar propietario de un directorio y todos sus subdirectorios
+hdfs dfs -chown -R [USUARIO]:[GRUPO] [RUTA]
+
+# Ejemplo: Cambiar todas las carpetas de LakeHouse a dr.who
+hdfs dfs -chown -R dr.who:supergroup /user/dr.who/LakeHouse/
+```
+
+**Descripción**: El comando `chown -R` cambia recursivamente el propietario de un directorio y todos sus contenidos. Útil cuando se crean carpetas desde notebooks que ejecutan como root y necesitan pertenecer al usuario específico.
+
+### Cambiar Permisos Recursivamente
+```bash
+# Cambiar permisos de un directorio y todos sus subdirectorios
+hdfs dfs -chmod -R [PERMISOS] [RUTA]
+
+# Ejemplo: Dar permisos de lectura/escritura recursivamente
+hdfs dfs -chmod -R 755 /user/dr.who/LakeHouse/
+```
+
+**Descripción**: El comando `chmod -R` cambia recursivamente los permisos de acceso. Los permisos 755 permiten lectura/escritura/ejecución al propietario y lectura/ejecución al grupo y otros.
+
+### Verificar Permisos Específicos
+```bash
+# Listar permisos de un directorio específico
+hdfs dfs -ls -d [RUTA]
+
+# Ejemplo: Ver permisos del directorio staging
+hdfs dfs -ls -d /user/dr.who/LakeHouse/staging
+```
+
+**Descripción**: El comando `ls -d` muestra información solo del directorio especificado (no su contenido), útil para verificar propietario y permisos de una carpeta específica.
+
+## 🌐 Configuración WebHDFS y CORS
+
+### Habilitar WebHDFS
+Para permitir cargas de archivos desde la interfaz web, agregar en `hdfs-site.xml`:
+```xml
+<property>
+    <name>dfs.webhdfs.enabled</name>
+    <value>true</value>
+</property>
+<property>
+    <name>dfs.datanode.http.address</name>
+    <value>0.0.0.0:9864</value>
+</property>
+<property>
+    <name>dfs.datanode.hostname</name>
+    <value>localhost</value>
+</property>
+```
+
+### Configurar CORS
+Para resolver problemas de carga desde navegador, agregar en `core-site.xml`:
+```xml
+<property>
+    <name>hadoop.http.cross-origin.enabled</name>
+    <value>true</value>
+</property>
+<property>
+    <name>hadoop.http.cross-origin.allowed-origins</name>
+    <value>*</value>
+</property>
+<property>
+    <name>hadoop.http.cross-origin.allowed-methods</name>
+    <value>GET,POST,HEAD,PUT,DELETE</value>
+</property>
+<property>
+    <name>hadoop.http.cross-origin.allowed-headers</name>
+    <value>X-Requested-With,Content-Type,Accept,Origin</value>
+</property>
+```
+
+**Nota**: Después de modificar estas configuraciones, es necesario reiniciar los servicios de Hadoop.
+
 ## 🔧 Comandos de Verificación
 
 ### Verificar Servicios HDFS
@@ -82,6 +158,9 @@ hdfs dfsadmin -report
 
 # Verificar conectividad
 hdfs dfs -ls /
+
+# Probar WebHDFS
+curl -i 'http://localhost:9870/webhdfs/v1/user/dr.who/LakeHouse/staging?op=LISTSTATUS'
 ```
 
 ### Verificar Permisos

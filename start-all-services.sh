@@ -13,9 +13,9 @@ docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && expo
 echo "2. Iniciando Hadoop NameNode..."
 docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && /opt/hadoop/bin/hdfs --daemon start namenode"
 
-# 3. Iniciar Hadoop DataNode
+# 3. Iniciar Hadoop DataNode (sin librerías nativas para evitar crashes)
 echo "3. Iniciando Hadoop DataNode..."
-docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && /opt/hadoop/bin/hdfs --daemon start datanode"
+docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && export HADOOP_OPTS='-Djava.library.path=' && /opt/hadoop/bin/hdfs --daemon start datanode"
 
 # 4. Iniciar YARN ResourceManager
 echo "4. Iniciando YARN ResourceManager..."

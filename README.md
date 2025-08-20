@@ -24,60 +24,38 @@ Los datos de Hadoop se almacenan de forma persistente en el directorio local `./
 Si quieres empezar completamente desde cero:
 
 ```bash
-# 1. Detener y eliminar contenedores
-docker-compose down -v
+# Detener y eliminar contenedores
+docker-compose down -v; docker rmi hadoopsparklocal-hadoop-spark-jupyter; docker volume prune -f; Remove-Item -Recurse -Force ./hadoop-data
 
-# 2. Eliminar imágenes (opcional, para rebuild completo)
-docker rmi hadoopsparklocal-hadoop-spark-jupyter
-
-# 3. Limpiar volúmenes (opcional, elimina datos persistentes)
-docker volume prune -f
-
-# 4. Eliminar datos persistentes de Hadoop (CUIDADO: elimina todos los datos del HDFS)
-rm -rf ./hadoop-data
-# En Windows PowerShell: Remove-Item -Recurse -Force ./hadoop-data
-
-# 5. Construir e iniciar contenedores
+# Construir e iniciar contenedores
 docker-compose up -d
 
-# 6. Ejecutar comandos de inicio manual (ver sección siguiente)
-```
+# Hasta aca solo esta levantado jupyter notebook
 
-### Inicio Automático
+# Formatear HDFS NameNode (solo la primera vez o después de limpieza)
+# Si el comando da error por JAVA_HOME
+# docker exec -it hadoop-spark-jupyter bash -c "ls /usr/lib/jvm/ || find /usr -name 'java*'"
+docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs namenode -format -force"
 
-1. Construir e iniciar los contenedores:
+# Iniciar Hadoop NameNode
+docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs --daemon start namenode"
 
-```bash
-docker-compose up -d
-```
+# Iniciar Hadoop DataNode
+docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs --daemon start datanode"
 
-Al ejecutar este comando, el contenedor automáticamente:
-- Configura Hadoop (core-site.xml, hdfs-site.xml, mapred-site.xml, yarn-site.xml)
-- Inicia Jupyter Notebook
-- **Nota**: Hadoop y Spark requieren inicio manual con los comandos siguientes
+# YARN
+docker exec -it hadoop-spark-jupyter bash -c "echo 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64' >> /etc/profile"
+docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/sbin/start-yarn.sh"
 
-### Secuencia completa de inicio manual
-
-Después de `docker-compose up -d`, ejecuta estos comandos en orden:
-
-```bash
-# 1. Formatear HDFS NameNode (solo la primera vez o después de limpieza)
-docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && /opt/hadoop/bin/hdfs namenode -format -force"
-
-# 2. Iniciar Hadoop NameNode
-docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && /opt/hadoop/bin/hdfs --daemon start namenode"
-
-# 3. Iniciar Hadoop DataNode
-docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && /opt/hadoop/bin/hdfs --daemon start datanode"
-
-# 4. Crear directorio de logs de Spark
+# Crear directorio de logs de Spark
 docker exec hadoop-spark-jupyter bash -c "mkdir -p /opt/spark/logs"
 
-# 5. Iniciar Spark Master
-docker exec hadoop-spark-jupyter bash -c "export SPARK_HOME=/opt/spark && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && export SPARK_CONF_DIR=/opt/spark/conf && nohup java -cp '/opt/spark/jars/*' -Xmx1g org.apache.spark.deploy.master.Master --host localhost --port 7077 --webui-port 8080 > /opt/spark/logs/spark-master.log 2>&1 &"
+# Iniciar Spark Master
+docker exec hadoop-spark-jupyter bash -c "export SPARK_HOME=/opt/spark && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && export SPARK_CONF_DIR=/opt/spark/conf && nohup java -cp '/opt/spark/jars/*' -Xmx1g org.apache.spark.deploy.master.Master --host localhost --port 7077 --webui-port 8080 > /opt/spark/logs/spark-master.log 2>&1 &"
 
-# 6. Iniciar Spark Worker
-docker exec hadoop-spark-jupyter bash -c "export SPARK_HOME=/opt/spark && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk && export SPARK_CONF_DIR=/opt/spark/conf && nohup java -cp '/opt/spark/jars/*' -Xmx1g org.apache.spark.deploy.worker.Worker spark://localhost:7077 --host localhost --webui-port 8081 > /opt/spark/logs/spark-worker.log 2>&1 &"
+# Iniciar Spark Worker
+docker exec hadoop-spark-jupyter bash -c "export SPARK_HOME=/opt/spark && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && export SPARK_CONF_DIR=/opt/spark/conf && nohup java -cp '/opt/spark/jars/*' -Xmx1g org.apache.spark.deploy.worker.Worker spark://localhost:7077 --host localhost --webui-port 8081 > /opt/spark/logs/spark-worker.log 2>&1 &"
+
 ```
 
 ### Script automatizado (recomendado)
@@ -188,6 +166,12 @@ docker-compose down
 ## Solución de problemas
 
 ### Errores comunes
+
+#### Error "Couldn't find datanode to write file. Forbidden"
+Este error indica que el DataNode no está ejecutándose. Las causas más comunes son:
+- **Crash del DataNode por librerías nativas**: Las librerías nativas de Hadoop pueden causar crashes en Alpine Linux. Los scripts automatizados ya incluyen la solución (`HADOOP_OPTS='-Djava.library.path='`)
+- **DataNode no iniciado**: Verifica que el DataNode esté ejecutándose con `docker exec hadoop-spark-jupyter jps`
+- **Permisos de HDFS**: Asegúrate de que el directorio de destino tenga los permisos correctos
 
 #### Error "declare: not found" en scripts de Hadoop
 Los scripts de Hadoop pueden tener problemas de compatibilidad con el shell. Usa los comandos Java directos documentados arriba en lugar de los scripts.
