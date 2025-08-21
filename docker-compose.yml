@@ -22,6 +22,7 @@ services:
     volumes:
       - ./notebooks:/notebooks
       - ./hadoop-data:/opt/hadoop/data
+      - ./hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
     environment:
       - PYSPARK_ALLOW_INSECURE_GATEWAY=1
     restart: unless-stopped

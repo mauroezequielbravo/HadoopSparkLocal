@@ -25,4 +25,22 @@
         <name>dfs.datanode.http.address</name>
         <value>0.0.0.0:9864</value>
     </property>
+    <!-- Desactiva la autenticación -->
+    <property>
+    <name>dfs.permissions.enabled</name>
+    <value>false</value>
+    </property>
+    <property>
+        <name>dfs.web.authentication.kerberos.principal</name>
+        <value></value>
+    </property>
+    <property>
+        <name>dfs.web.authentication.kerberos.keytab</name>
+        <value></value>
+    </property>
+    <property>
+        <name>dfs.web.authentication.simple.anonymous.allowed</name>
+        <value>true</value>
+    </property>
+    <!-- Desactiva la autenticación -->
 </configuration>
