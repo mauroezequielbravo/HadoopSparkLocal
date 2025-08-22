@@ -35,7 +35,7 @@ docker-compose up -d
 # Formatear HDFS NameNode (solo la primera vez o después de limpieza)
 # Si el comando da error por JAVA_HOME
 # docker exec -it hadoop-spark-jupyter bash -c "ls /usr/lib/jvm/ || find /usr -name 'java*'"
-docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs namenode -format -force"
+##### docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs namenode -format -force"
 
 # Iniciar Hadoop NameNode
 docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs --daemon start namenode"
@@ -203,3 +203,28 @@ docker exec hadoop-spark-jupyter tail -f /opt/spark/logs/spark-worker.log
 - `docker-compose.yml`: Configuración para orquestar los servicios
 - `start-services.sh`: Script para iniciar todos los servicios
 - `notebooks/`: Directorio compartido para los notebooks de Jupyter
+
+
+## Subir archivo local
+```bash
+docker cp "C:\Users\xxx\Downloads\xxx.csv" hadoop-spark-jupyter:/tmp/xxx.csv
+docker exec hadoop-spark-jupyter bash -c "export HADOOP_HOME=/opt/hadoop && export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 && /opt/hadoop/bin/hdfs dfs -put /tmp/xxx.csv /carpeta/"
+```
+
+## Cambiar permisos de una carpeta
+```bash
+docker exec hadoop-spark-jupyter bash -c "/opt/hadoop/bin/hdfs dfs -chmod 777 /prueba"
+```
+## Detener servicios
+```bash
+   docker exec hadoop-spark-jupyter bash -c "hdfs --daemon stop datanode"
+   docker exec hadoop-spark-jupyter bash -c "hdfs --daemon stop namenode"
+```
+
+## Reiniciar servicios
+```bash
+   docker exec hadoop-spark-jupyter bash -c "hdfs --daemon start namenode"
+   docker exec hadoop-spark-jupyter bash -c "hdfs --daemon start datanode"
+```
+
+

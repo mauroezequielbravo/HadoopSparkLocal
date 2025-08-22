@@ -3,65 +3,9 @@
 # Configuración de Hadoop
 echo "Configurando Hadoop..."
 
-# core-site.xml
-cat > $HADOOP_CONF_DIR/core-site.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<configuration>
-    <property>
-        <name>fs.defaultFS</name>
-        <value>hdfs://localhost:9000</value>
-    </property>
-</configuration>
-EOF
-
-# hdfs-site.xml
-cat > $HADOOP_CONF_DIR/hdfs-site.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<configuration>
-    <property>
-        <name>dfs.replication</name>
-        <value>1</value>
-    </property>
-    <property>
-        <name>dfs.namenode.name.dir</name>
-        <value>/opt/hadoop/data/namenode</value>
-    </property>
-    <property>
-        <name>dfs.datanode.data.dir</name>
-        <value>/opt/hadoop/data/datanode</value>
-    </property>
-</configuration>
-EOF
-
-# mapred-site.xml
-cat > $HADOOP_CONF_DIR/mapred-site.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<configuration>
-    <property>
-        <name>mapreduce.framework.name</name>
-        <value>yarn</value>
-    </property>
-</configuration>
-EOF
-
-# yarn-site.xml
-cat > $HADOOP_CONF_DIR/yarn-site.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-<configuration>
-    <property>
-        <name>yarn.nodemanager.aux-services</name>
-        <value>mapreduce_shuffle</value>
-    </property>
-    <property>
-        <name>yarn.nodemanager.env-whitelist</name>
-        <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
-    </property>
-</configuration>
-EOF
+# Configurar JAVA_HOME explícitamente
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME/bin
 
 # Configurar variables de entorno para Hadoop
 export HDFS_NAMENODE_USER=root
@@ -92,8 +36,14 @@ chmod 700 ~/.ssh
 echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config
 
+# Crear directorio para SSH si no existe
+mkdir -p /run/sshd
+
 # Iniciar el servicio SSH
-/usr/sbin/sshd -D &
+/usr/sbin/sshd
+
+# Esperar a que SSH esté disponible
+sleep 5
 
 # Formatear el namenode si no existe
 if [ ! -d "/opt/hadoop/data/namenode/current" ]; then
@@ -114,73 +64,88 @@ $HADOOP_HOME/bin/hdfs dfs -chmod -R 755 /user/root
 echo "Configurando Spark..."
 export SPARK_DIST_CLASSPATH=$($HADOOP_HOME/bin/hadoop classpath)
 
+# Crear directorio de logs para Spark
+mkdir -p /opt/spark/logs
+
+# Configurar Spark para usar localhost como hostname público
+export SPARK_PUBLIC_DNS=localhost
+export SPARK_WORKER_HOST=localhost
+
+# Iniciar Spark Master usando 0.0.0.0 para escuchar en todas las interfaces
+echo "Iniciando Spark Master..."
+$SPARK_HOME/sbin/start-master.sh --host 0.0.0.0
+
+# Iniciar Spark Worker conectándose al Master
+echo "Iniciando Spark Worker..."
+$SPARK_HOME/sbin/start-worker.sh --host localhost spark://0.0.0.0:7077
+
 # Crear un notebook de ejemplo para PySpark
-cat > /notebooks/spark_example.ipynb << EOF
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "source": [
-    "import findspark\n",
-    "findspark.init()\n",
-    "\n",
-    "from pyspark.sql import SparkSession\n",
-    "\n",
-    "# Crear una sesión de Spark\n",
-    "spark = SparkSession.builder\\\n",
-    "    .appName(\"Ejemplo PySpark\")\\\n",
-    "    .master(\"local[*]\")\\\n",
-    "    .getOrCreate()\n",
-    "\n",
-    "# Mostrar información de la sesión\n",
-    "print(f\"Versión de Spark: {spark.version}\")\n",
-    "\n",
-    "# Crear un DataFrame de ejemplo\n",
-    "data = [(\"Juan\", 30), (\"Ana\", 25), (\"Carlos\", 35)]\n",
-    "df = spark.createDataFrame(data, [\"Nombre\", \"Edad\"])\n",
-    "\n",
-    "# Mostrar el DataFrame\n",
-    "df.show()\n",
-    "\n",
-    "# Realizar algunas operaciones\n",
-    "df.select(\"Nombre\").show()\n",
-    "df.filter(df.Edad > 28).show()\n",
-    "\n",
-    "# Acceder a HDFS\n",
-    "# Guardar el DataFrame en HDFS\n",
-    "df.write.mode(\"overwrite\").csv(\"/user/root/personas\")\n",
-    "\n",
-    "# Leer el DataFrame desde HDFS\n",
-    "df_leido = spark.read.csv(\"/user/root/personas\")\n",
-    "df_leido.show()\n"
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python 3",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.8.10"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 4
-}
-EOF
+# cat > /notebooks/spark_example.ipynb << EOF
+# {
+#  "cells": [
+#   {
+#    "cell_type": "code",
+#    "execution_count": null,
+#    "metadata": {},
+#    "source": [
+#     "import findspark\n",
+#     "findspark.init()\n",
+#     "\n",
+#     "from pyspark.sql import SparkSession\n",
+#     "\n",
+#     "# Crear una sesión de Spark\n",
+#     "spark = SparkSession.builder\\\n",
+#     "    .appName(\"Ejemplo PySpark\")\\\n",
+#     "    .master(\"local[*]\")\\\n",
+#     "    .getOrCreate()\n",
+#     "\n",
+#     "# Mostrar información de la sesión\n",
+#     "print(f\"Versión de Spark: {spark.version}\")\n",
+#     "\n",
+#     "# Crear un DataFrame de ejemplo\n",
+#     "data = [(\"Juan\", 30), (\"Ana\", 25), (\"Carlos\", 35)]\n",
+#     "df = spark.createDataFrame(data, [\"Nombre\", \"Edad\"])\n",
+#     "\n",
+#     "# Mostrar el DataFrame\n",
+#     "df.show()\n",
+#     "\n",
+#     "# Realizar algunas operaciones\n",
+#     "df.select(\"Nombre\").show()\n",
+#     "df.filter(df.Edad > 28).show()\n",
+#     "\n",
+#     "# Acceder a HDFS\n",
+#     "# Guardar el DataFrame en HDFS\n",
+#     "df.write.mode(\"overwrite\").csv(\"/user/root/personas\")\n",
+#     "\n",
+#     "# Leer el DataFrame desde HDFS\n",
+#     "df_leido = spark.read.csv(\"/user/root/personas\")\n",
+#     "df_leido.show()\n"
+#    ]
+#   }
+#  ],
+#  "metadata": {
+#   "kernelspec": {
+#    "display_name": "Python 3",
+#    "language": "python",
+#    "name": "python3"
+#   },
+#   "language_info": {
+#    "codemirror_mode": {
+#     "name": "ipython",
+#     "version": 3
+#    },
+#    "file_extension": ".py",
+#    "mimetype": "text/x-python",
+#    "name": "python",
+#    "nbconvert_exporter": "python",
+#    "pygments_lexer": "ipython3",
+#    "version": "3.8.10"
+#   }
+#  },
+#  "nbformat": 4,
+#  "nbformat_minor": 4
+# }
+# EOF
 
 # Esperar a que los servicios se inicien completamente
 echo "Esperando a que los servicios se inicien..."
