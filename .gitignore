@@ -62,7 +62,7 @@ Thumbs.db
 .dockerignore
 
 # Hadoop/Spark specific
-hadoop/
+# hadoop/ <- REMOVIDO: ahora necesitamos versionar esta carpeta
 spark-warehouse/
 metastore_db/
 derby.log

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- Configuración básica de Hadoop -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://hadoop-master:9000</value>
+    </property>
+    
+    <!-- Directorio temporal -->
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/tmp/hadoop-${user.name}</value>
+    </property>
+    
+    <!-- Permitir acceso anónimo -->
+    <property>
+        <name>hadoop.http.authentication.type</name>
+        <value>simple</value>
+    </property>
+    
+    <property>
+        <name>hadoop.http.authentication.simple.anonymous.allowed</name>
+        <value>true</value>
+    </property>
+    
+    <!-- Usuario por defecto para acceso web -->
+    <property>
+        <name>hadoop.http.staticuser.user</name>
+        <value>dr.who</value>
+    </property>
+    
+    <!-- Para WebHDFS -->
+    <property>
+        <name>hadoop.proxyuser.dr.who.groups</name>
+        <value>*</value>
+    </property>
+    
+    <property>
+        <name>hadoop.proxyuser.dr.who.hosts</name>
+        <value>*</value>
+    </property>
+    
+    <!-- Configuración para desarrollo local -->
+    <property>
+        <name>hadoop.security.authentication</name>
+        <value>simple</value>
+    </property>
+    
+    <property>
+        <name>hadoop.security.authorization</name>
+        <value>false</value>
+    </property>
+</configuration>
