@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!-- ====================================== -->
+    <!-- Configuración del Metastore (PostgreSQL) -->
+    <!-- ====================================== -->
+    
+    <!-- URL de conexión a PostgreSQL (puerto 5433) -->
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:postgresql://postgres:5432/metastore</value>
+        <description>JDBC connection string for PostgreSQL metastore database</description>
+    </property>
+    
+    <!-- Driver JDBC de PostgreSQL -->
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>org.postgresql.Driver</value>
+        <description>PostgreSQL JDBC driver class</description>
+    </property>
+    
+    <!-- Usuario de la base de datos -->
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>hive</value>
+        <description>Username for metastore database</description>
+    </property>
+    
+    <!-- Contraseña de la base de datos -->
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>hivepassword</value>
+        <description>Password for metastore database</description>
+    </property>
+    
+    <!-- ====================================== -->
+    <!-- Configuración del Metastore Service -->
+    <!-- ====================================== -->
+    
+    <!-- URI del Metastore -->
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://hive-metastore:9083</value>
+        <description>Thrift URI for the remote metastore</description>
+    </property>
+    
+    <!-- Warehouse directory en HDFS -->
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+        <description>Location of default database for the warehouse</description>
+    </property>
+    
+    <!-- ====================================== -->
+    <!-- Configuración de HiveServer2 -->
+    <!-- ====================================== -->
+    
+    <!-- Host de HiveServer2 -->
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>0.0.0.0</value>
+        <description>Bind host on which to run the HiveServer2 Thrift service</description>
+    </property>
+    
+    <!-- Puerto de HiveServer2 -->
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+        <description>Port number of HiveServer2 Thrift interface</description>
+    </property>
+    
+    <!-- Web UI de HiveServer2 -->
+    <property>
+        <name>hive.server2.webui.host</name>
+        <value>0.0.0.0</value>
+        <description>Host for HiveServer2 Web UI</description>
+    </property>
+    
+    <property>
+        <name>hive.server2.webui.port</name>
+        <value>10002</value>
+        <description>Port for HiveServer2 Web UI</description>
+    </property>
+    
+    <!-- ====================================== -->
+    <!-- Configuración de HDFS -->
+    <!-- ====================================== -->
+    
+    <!-- NameNode de HDFS -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://hadoop-master:9000</value>
+        <description>HDFS NameNode URI</description>
+    </property>
+    
+    <!-- ====================================== -->
+    <!-- Configuraciones de Performance y Seguridad -->
+    <!-- ====================================== -->
+    
+    <!-- Deshabilitar verificación de esquema (útil para desarrollo) -->
+    <property>
+        <name>hive.metastore.schema.verification</name>
+        <value>false</value>
+        <description>Enforce metastore schema version consistency</description>
+    </property>
+    
+    <!-- Auto crear esquema si no existe -->
+    <property>
+        <name>datanucleus.schema.autoCreateAll</name>
+        <value>true</value>
+        <description>Auto create metastore schema if it doesn't exist</description>
+    </property>
+    
+    <!-- Actualizar esquema si es necesario -->
+    <property>
+        <name>hive.metastore.schema.verification.record.version</name>
+        <value>false</value>
+    </property>
+    
+    <!-- Autenticación deshabilitada (para desarrollo local) -->
+    <property>
+        <name>hive.server2.authentication</name>
+        <value>NONE</value>
+        <description>Client authentication types: NONE, LDAP, KERBEROS, CUSTOM</description>
+    </property>
+    
+    <!-- Permitir operaciones en tablas sin particiones -->
+    <property>
+        <name>hive.exec.dynamic.partition.mode</name>
+        <value>nonstrict</value>
+        <description>Dynamic partition mode: strict or nonstrict</description>
+    </property>
+    
+    <!-- Directorio temporal local -->
+    <property>
+        <name>hive.exec.local.scratchdir</name>
+        <value>/tmp/hive</value>
+        <description>Local scratch space for Hive jobs</description>
+    </property>
+    
+    <!-- Directorio temporal en HDFS -->
+    <property>
+        <name>hive.exec.scratchdir</name>
+        <value>/tmp/hive-${user.name}</value>
+        <description>HDFS scratch space for Hive jobs</description>
+    </property>
+    
+    <!-- Habilitar estadísticas -->
+    <property>
+        <name>hive.stats.autogather</name>
+        <value>true</value>
+        <description>Auto gather basic stats</description>
+    </property>
+    
+    <!-- Configuración de logs -->
+    <property>
+        <name>hive.server2.logging.operation.enabled</name>
+        <value>true</value>
+        <description>Enable HiveServer2 operation logging</description>
+    </property>
+    
+    <!-- Compatibilidad con Spark -->
+    <property>
+        <name>hive.metastore.event.db.notification.api.auth</name>
+        <value>false</value>
+        <description>Should metastore do authorization checks against database operations</description>
+    </property>
+    
+</configuration>
