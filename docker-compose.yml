@@ -76,6 +76,103 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # =====================================================
+  # Contenedor de PostgreSQL (Metastore de Hive)
+  # =====================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-hive-metastore
+    hostname: postgres
+    networks:
+      - hadoop-spark-net
+    ports:
+      # Puerto alternativo 5433 para evitar conflictos
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init-hive-metastore.sh:/docker-entrypoint-initdb.d/init-hive-metastore.sh:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # =====================================================
+  # Hive Metastore Service
+  # =====================================================
+  hive-metastore:
+    build:
+      context: ./hive
+      dockerfile: Dockerfile
+    container_name: hive-metastore
+    hostname: hive-metastore
+    networks:
+      - hadoop-spark-net
+    ports:
+      # Metastore Thrift service
+      - "9083:9083"
+    volumes:
+      - ./hive/config/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - ./hadoop/config/core-site.xml:/opt/hadoop-conf/core-site.xml:ro
+      - ./hadoop/config/hdfs-site.xml:/opt/hadoop-conf/hdfs-site.xml:ro
+      - ./hadoop/config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop/config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    environment:
+      - HIVE_SERVICE=metastore
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hadoop:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "9083" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  # =====================================================
+  # HiveServer2 (Servidor de consultas SQL)
+  # =====================================================
+  hive-server:
+    build:
+      context: ./hive
+      dockerfile: Dockerfile
+    container_name: hive-server
+    hostname: hive-server
+    networks:
+      - hadoop-spark-net
+    ports:
+      # HiveServer2 JDBC
+      - "10000:10000"
+      # HiveServer2 Web UI
+      - "10002:10002"
+    volumes:
+      - ./hive/config/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - ./hadoop/config/core-site.xml:/opt/hadoop-conf/core-site.xml:ro
+      - ./hadoop/config/hdfs-site.xml:/opt/hadoop-conf/hdfs-site.xml:ro
+      - ./hadoop/config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop/config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    environment:
+      - HIVE_SERVICE=hiveserver2
+    depends_on:
+      hive-metastore:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "10000" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
 # =====================================================
 # Red personalizada para comunicación entre contenedores
 # =====================================================
@@ -83,3 +180,10 @@ networks:
   hadoop-spark-net:
     driver: bridge
     name: hadoop-spark-network
+
+# =====================================================
+# Volúmenes persistentes
+# =====================================================
+volumes:
+  postgres-data:
+    name: hive-metastore-postgres-data
